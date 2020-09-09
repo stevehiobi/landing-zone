@@ -1,0 +1,118 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation Template for GuardDuty",
+  "Parameters": {
+      "TrailLogGroupName": {
+          "Description": "Specific name for log group",
+          "Type": "String",
+          "Default": "CloudTrail/DefaultLogGroup"
+      },
+      "TrailLogGroupRoleName": {
+          "Description": "Specific name for role",
+          "Type": "String",
+          "Default": "CloudTrail_CloudWatchLogs_Role"
+      },
+      "CloudTrailName": {
+          "Description": "cloudtrail name",
+          "Type": "String",
+          "Default": "uat-trail01"
+      },
+      "S3BucketNameCloudtrail": {
+          "Description": "Centralised bucket name for aws cloudtrail",
+          "Type": "String",
+          "Default": "uaex-centralized-cloudtrail-logs01"
+      },
+      "S3KeyPrefixCloudtrail": {
+          "Description": "S3 prefix according to environment for cloudtrail",
+          "Type": "String",
+          "Default": "uat-trail"
+      }
+  },
+  "Resources": {
+      "TrailLogGroup": {
+          "Type": "AWS::Logs::LogGroup",
+          "Properties": {
+              "LogGroupName": {
+                  "Ref": "TrailLogGroupName"
+              }
+          }
+      },
+      "TrailLogGroupRole": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+              "RoleName": {
+                  "Ref": "TrailLogGroupRoleName"
+              },
+              "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                      {
+                          "Sid": "AssumeRole1",
+                          "Effect": "Allow",
+                          "Principal": {
+                              "Service": "cloudtrail.amazonaws.com"
+                          },
+                          "Action": "sts:AssumeRole"
+                      }
+                  ]
+              },
+              "Policies": [
+                  {
+                      "PolicyName": "cloudtrail-policy",
+                      "PolicyDocument": {
+                          "Version": "2012-10-17",
+                          "Statement": [
+                              {
+                                  "Effect": "Allow",
+                                  "Action": [
+                                      "logs:CreateLogStream",
+                                      "logs:PutLogEvents"
+                                  ],
+                                  "Resource": {
+                                      "Fn::GetAtt": [
+                                          "TrailLogGroup",
+                                          "Arn"
+                                      ]
+                                  }
+                              }
+                          ]
+                      }
+                  }
+              ]
+          }
+      },
+      "cloudtrail": {
+          "Type": "AWS::CloudTrail::Trail",
+          "DependsOn": [
+              "TrailLogGroup",
+              "TrailLogGroupRole"
+          ],
+          "Properties": {
+              "TrailName": {
+                  "Ref": "CloudTrailName"
+              },
+              "S3BucketName": {
+                  "Ref": "S3BucketNameCloudtrail"
+              },
+              "S3KeyPrefix": {
+                  "Ref": "S3KeyPrefixCloudtrail"
+              },
+              "IncludeGlobalServiceEvents": true,
+              "IsLogging": true,
+              "IsMultiRegionTrail": true,
+              "CloudWatchLogsLogGroupArn": {
+                  "Fn::GetAtt": [
+                      "TrailLogGroup",
+                      "Arn"
+                  ]
+              },
+              "CloudWatchLogsRoleArn": {
+                  "Fn::GetAtt": [
+                      "TrailLogGroupRole",
+                      "Arn"
+                  ]
+              }
+          }
+      }
+  }
+}

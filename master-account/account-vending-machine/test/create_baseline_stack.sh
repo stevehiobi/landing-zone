@@ -1,0 +1,1 @@
+aws cloudformation create-stack --stack-name avm-stack --template-body file://cloudformation/accountbaseline.yml  --parameters file://test/cfg_bucket_with_keys.json --capabilities CAPABILITY_NAMED_IAM --profile 650022666312_AdministratorAccess --region eu-central-1

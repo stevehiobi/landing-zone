@@ -1,0 +1,30 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation Template for GuardDuty",
+  "Parameters": {
+      "GuarddutyMasterID": {
+          "Description": "Guardduty master account",
+          "Type": "String",
+          "Default": 682482963821
+      }
+  },
+  "Resources": {
+      "Detector": {
+          "Type": "AWS::GuardDuty::Detector",
+          "Properties": {
+              "Enable": true
+          }
+      },
+      "GuarddutyMaster": {
+          "Type": "AWS::GuardDuty::Master",
+          "Properties": {
+              "DetectorId": {
+                  "Ref": "Detector"
+              },
+              "MasterId": {
+                  "Ref": "GuarddutyMasterID"
+              }
+          }
+      }
+  }
+}

@@ -1,0 +1,10 @@
+[
+    {
+      "ParameterKey": "ServiceCatalogUserName",
+      "ParameterValue": "service-catalog-user"
+    }, 
+    {
+      "ParameterKey": "ServiceCatalogUserPassword",
+      "ParameterValue": "service-catalog-2019"
+    }
+  ]

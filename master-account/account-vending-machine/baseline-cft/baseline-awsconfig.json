@@ -1,0 +1,279 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation Template for centralised cloudtrail, aws config and GuardDuty",
+  "Parameters": {
+      "AwsConfigRole": {
+          "Description": "Aws service role for aws config",
+          "Type": "String",
+          "Default": "ServiceRoleForConfig"
+      },
+      "S3BucketNameConfig": {
+          "Description": "Centralised bucket name for aws config",
+          "Type": "String",
+          "Default": "ntt-centralized-config-logs"
+      },
+      "S3KeyPrefixConfig": {
+          "Description": "S3 prefix according to environment for aws config",
+          "Type": "String",
+          "Default": "uat-account"
+      }
+  },
+  "Resources": {
+      "ConfigRole": {
+          "Type": "AWS::IAM::Role",
+          "Properties": {
+              "RoleName": {
+                  "Ref": "AwsConfigRole"
+              },
+              "ManagedPolicyArns": [
+                  "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+              ],
+              "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                      {
+                          "Sid": "AssumeRole1",
+                          "Effect": "Allow",
+                          "Principal": {
+                              "Service": "config.amazonaws.com"
+                          },
+                          "Action": "sts:AssumeRole"
+                      }
+                  ]
+              }
+          }
+      },
+      "ConfigDeliveryChannel": {
+          "Type": "AWS::Config::DeliveryChannel",
+          "Properties": {
+              "S3BucketName": {
+                  "Ref": "S3BucketNameConfig"
+              },
+              "S3KeyPrefix": {
+                  "Ref": "S3KeyPrefixConfig"
+              }
+          }
+      },
+      "ConfigConfigurationRecorder": {
+          "Type": "AWS::Config::ConfigurationRecorder",
+          "DependsOn": "ConfigRole",
+          "Properties": {
+              "RecordingGroup": {
+                  "AllSupported": true,
+                  "IncludeGlobalResourceTypes": true
+              },
+              "RoleARN": {
+                  "Fn::GetAtt": [
+                      "ConfigRole",
+                      "Arn"
+                  ]
+              }
+          }
+      },
+      "RuleCloudtrailEnabled": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "cloudtrail-enabled",
+              "Description": "Checks whether AWS CloudTrail is enabled in your AWS account. Optionally, you can specify which S3 bucket, SNS topic, and Amazon CloudWatch Logs ARN to use.",
+              "Scope": {},
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "CLOUD_TRAIL_ENABLED"
+              },
+              "InputParameters": "{}",
+              "MaximumExecutionFrequency": "TwentyFour_Hours"
+          }
+      },
+      "RuleDBInstanceBackupEnabled": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "db-instance-backup-enabled",
+              "Description": "Checks whether RDS DB instances have backups enabled. Optionally, the rule checks the backup retention period and the backup window.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::RDS::DBInstance"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "DB_INSTANCE_BACKUP_ENABLED"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleEC2VolumeInuseCheck": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "ec2-volume-inuse-check",
+              "Description": "Checks whether EBS volumes are attached to EC2 instances. Optionally checks if EBS volumes are marked for deletion when an instance is terminated.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::EC2::Volume"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "EC2_VOLUME_INUSE_CHECK"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleEipAttached": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "eip-attached",
+              "Description": "Checks whether all EIP addresses allocated to a VPC are attached to EC2 instances or in-use ENIs.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::EC2::EIP"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "EIP_ATTACHED"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleEncryptedVolumes": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "encrypted-volumes",
+              "Description": "Checks whether EBS volumes that are in an attached state are encrypted. Optionally, you can specify the ID of a KMS key to use to encrypt the volume.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::EC2::Volume"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "ENCRYPTED_VOLUMES"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleIAMUserNoPoliciesCheck": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "iam-user-no-policies-check",
+              "Description": "Checks that none of your IAM users have policies attached. IAM users must inherit permissions from IAM groups or roles.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::IAM::User"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "IAM_USER_NO_POLICIES_CHECK"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleRDSStorageEncypted": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "rds-storage-encrypted",
+              "Description": "Checks whether storage encryption is enabled for your RDS DB instances.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::RDS::DBInstance"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "RDS_STORAGE_ENCRYPTED"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleRestrictedSSH": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "restricted-ssh",
+              "Description": "Checks whether security groups that are in use disallow unrestricted incoming SSH traffic.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::EC2::SecurityGroup"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "INCOMING_SSH_DISABLED"
+              },
+              "InputParameters": "{}"
+          }
+      },
+      "RuleS3BucketPublicReadProhibited": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "s3-bucket-public-read-prohibited",
+              "Description": "Checks that your S3 buckets do not allow public read access. If an S3 bucket policy or bucket ACL allows public read access, the bucket is noncompliant.",
+              "Scope": {
+                  "ComplianceResourceTypes": [
+                      "AWS::S3::Bucket"
+                  ]
+              },
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "S3_BUCKET_PUBLIC_READ_PROHIBITED"
+              },
+              "InputParameters": "{}",
+              "MaximumExecutionFrequency": "TwentyFour_Hours"
+          }
+      },
+      "RuleVPCFlowLogsEnabled": {
+          "Type": "AWS::Config::ConfigRule",
+          "DependsOn": [
+              "ConfigDeliveryChannel",
+              "ConfigConfigurationRecorder"
+          ],
+          "Properties": {
+              "ConfigRuleName": "vpc-flow-logs-enabled",
+              "Description": "Checks whether Amazon Virtual Private Cloud flow logs are found and enabled for Amazon VPC.",
+              "Scope": {},
+              "Source": {
+                  "Owner": "AWS",
+                  "SourceIdentifier": "VPC_FLOW_LOGS_ENABLED"
+              },
+              "InputParameters": "{}",
+              "MaximumExecutionFrequency": "TwentyFour_Hours"
+          }
+      }
+  }
+}

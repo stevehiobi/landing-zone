@@ -1,0 +1,54 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AWSCloudTrailAclCheck20200908",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "cloudtrail.amazonaws.com",
+                    "config.amazonaws.com"
+                ]
+            },
+            "Action": "s3:GetBucketAcl",
+            "Resource": "arn:aws:s3:::MyBucketName"
+        },
+        {
+            "Sid": "AWSServiceWrite20200908",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "cloudtrail.amazonaws.com",
+                    "config.amazonaws.com"
+                ]
+            },
+            "Action": "s3:PutObject",
+            "Resource": [
+					"arn:aws:s3:::MyBucketName/AWSLogs/XXXXXXXXXXXX/*",
+					"arn:aws:s3:::MyBucketName/AWSLogs/YYYYYYYYYYYY/*",
+					"arn:aws:s3:::MyBucketName/AWSLogs/ZZZZZZZZZZZZ/*"
+				],
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+            }
+        },
+        {
+            "Sid": "AWSCloudTrailWrite20200908",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "cloudtrail.amazonaws.com"
+                ]
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::MyBucketName/AWSLogs/MYORGANIZATIONID/*",
+            "Condition": {
+                "StringEquals": {
+                    "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+            }
+        }
+    ]
+}
