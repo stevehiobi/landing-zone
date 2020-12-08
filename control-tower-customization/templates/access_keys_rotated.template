@@ -1,0 +1,21 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Checks whether the active access keys are rotated within the number of days specified in maxAccessKeyAge.
+Parameters:
+  maxAccessKeyAge:
+    Type: 'String'
+    Description: 'Maximum number of days within which the access keys must be rotated. The default value is 90 days.'
+
+Resources:
+  CustomConfigRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: ACCESS_KEYS_ROTATED
+      Description: Custom Config Rule - Checks whether the active access keys are rotated within the number of days specified in maxAccessKeyAge 
+      InputParameters:
+        maxAccessKeyAge : !Ref maxAccessKeyAge
+      Source:
+        Owner: AWS
+        SourceIdentifier: ACCESS_KEYS_ROTATED
+      Scope:
+        ComplianceResourceTypes: []

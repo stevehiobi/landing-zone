@@ -81,7 +81,7 @@
               ]
           }
       },
-      "cloudtrail": {
+      "Cloudtrail": {
           "Type": "AWS::CloudTrail::Trail",
           "DependsOn": [
               "TrailLogGroup",

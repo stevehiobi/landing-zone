@@ -1,0 +1,39 @@
+---
+#Default region for deploying Custom Control Tower: Code Pipeline, Step functions, Lambda, SSM parameters, and StackSets
+region: us-west-2 # Control Tower Home Region
+version: 2020-01-01
+
+# Control Tower Custom Service Control Policies - Additional Preventive Guardrails
+organization_policies:
+  - name: test-preventive-guardrails
+    description: To prevent from deleting or disabling resources in member accounts
+    policy_file: policies/preventive-guardrails.json
+    #Apply to the following OU(s)
+    apply_to_accounts_in_ou: # :type: list
+      - Core
+      - Research
+
+# Control Tower Custom CloudFormation Resources - Create Additional IAM Role
+cloudformation_resources:
+  - name: stackset-1
+    template_file: templates/describe-regions-iam-role.template
+    deploy_method: stack_set
+    deploy_to_ou: # :type: list
+      - Research
+      - Custom
+    regions:
+      - us-west-2 
+
+# Control Tower Config Rule - Additional Detective Guardrails
+  - name: stackset-2
+    template_file: templates/access_keys_rotated.template
+    parameter_file: parameters/access_keys_rotated.json
+    deploy_method: stack_set
+    deploy_to_ou: # :type: list
+      - Research
+    regions: 
+      - us-east-1
+      - us-east-2
+      - us-west-2
+      - eu-west-1
+      - ap-southeast-2

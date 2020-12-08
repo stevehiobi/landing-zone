@@ -1,0 +1,19 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyMultiAzRDS",
+            "Effect": "Deny",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:ModifyDBInstance"
+            ],
+            "Resource": "arn:aws:rds:*:*:db:*",
+            "Condition": {
+                "Bool": {
+                    "rds:MultiAz": "true"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyAccessToRI",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:PurchaseReservedInstancesOffering",
+                "ec2:AcceptReservedInstancesExchangeQuote",
+                "ec2:CancelCapacityReservation",
+                "ec2:CancelReservedInstancesListing",
+                "ec2:CreateCapacityReservation",
+                "ec2:CreateReservedInstancesListing"
+            ],
+            "Resource": [
+                "*"
+            ],
+            "Condition": {
+                "StringNotLike": {
+                    "aws:PrincipalArn": [
+                        "arn:aws:iam::*:role/AWSControlTowerAdmin",
+                        "arn:aws:iam::*:role/AWSControlTowerCloudTrailRole",
+                        "arn:aws:iam::*:role/AWSControlTowerStackSetRole",
+						"arn:aws:iam::*:role/*ControlTower*",
+						"arn:aws:iam::*:role/*controltower*"
+                    ]
+                }
+            }
+        }
+    ]
+}

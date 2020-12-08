@@ -1,0 +1,30 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowSpecificRDSEnginesAndInstanceTypesOnly",
+            "Effect": "Deny",
+            "Action": [
+                "rds:CreateDBInstance"
+            ],
+            "Resource": "arn:aws:rds:*:*:db:*",
+            "Condition": {
+                "StringNotLikeIfExists": {
+                    "rds:DatabaseEngine": [
+                        "postgres",
+                        "mysql",
+                        "sqlserver-ex*",
+                        "sqlserver-se*"
+                    ]
+                },
+                "StringNotEquals": {
+                    "rds:DatabaseClass": [
+                        "db.*.micro",
+                        "db.*.small",
+                        "db.*.medium"
+                    ]
+                }
+            }
+        }
+    ]
+}

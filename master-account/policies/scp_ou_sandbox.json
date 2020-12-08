@@ -1,0 +1,159 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyAllOutsideSpecificRegions",
+            "Effect": "Deny",
+            "NotAction": [
+                "a4b:*",
+                "acm:*",
+                "aws-marketplace-management:*",
+                "aws-marketplace:*",
+                "aws-portal:*",
+                "awsbillingconsole:*",
+                "budgets:*",
+                "ce:*",
+                "chime:*",
+                "cloudfront:*",
+                "config:*",
+                "cur:*",
+                "directconnect:*",
+                "ec2:DescribeRegions",
+                "ec2:DescribeTransitGateways",
+                "ec2:DescribeVpnGateways",
+                "fms:*",
+                "globalaccelerator:*",
+                "health:*",
+                "iam:*",
+                "importexport:*",
+                "kms:*",
+                "mobileanalytics:*",
+                "networkmanager:*",
+                "organizations:*",
+                "pricing:*",
+                "route53:*",
+                "route53domains:*",
+                "s3:GetAccountPublic*",
+                "s3:ListAllMyBuckets",
+                "s3:ListBuckets",
+                "s3:PutAccountPublic*",
+                "shield:*",
+                "sts:*",
+                "support:*",
+                "trustedadvisor:*",
+                "waf-regional:*",
+                "waf:*",
+                "wafv2:*",
+                "wellarchitected:*"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringNotEquals": {
+                    "aws:RequestedRegion": [
+                        "us-east-1",
+                        "eu-west-1"
+                    ]
+                },
+                "ArnNotLike": {
+                    "aws:PrincipalARN": [
+                        "arn:aws:iam::*:role/AWSControlTowerAdmin",
+                        "arn:aws:iam::*:role/AWSControlTowerCloudTrailRole",
+                        "arn:aws:iam::*:role/AWSControlTowerStackSetRole",
+						"arn:aws:iam::*:role/*ControlTower*",
+						"arn:aws:iam::*:role/*controltower*"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "DenyAccessToRI",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:PurchaseReservedInstancesOffering",
+                "ec2:AcceptReservedInstancesExchangeQuote",
+                "ec2:CancelCapacityReservation",
+                "ec2:CancelReservedInstancesListing",
+                "ec2:CreateCapacityReservation",
+                "ec2:CreateReservedInstancesListing"
+            ],
+            "Resource": [
+                "*"
+            ],
+            "Condition": {
+                "StringNotLike": {
+                    "aws:PrincipalArn": [
+                        "arn:aws:iam::*:role/AWSControlTowerAdmin",
+                        "arn:aws:iam::*:role/AWSControlTowerCloudTrailRole",
+                        "arn:aws:iam::*:role/AWSControlTowerStackSetRole",
+						"arn:aws:iam::*:role/*ControlTower*",
+						"arn:aws:iam::*:role/*controltower*"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "AllowSpecificEC2InstanceTypesOnly",
+            "Effect": "Deny",
+            "Action": "ec2:RunInstances",
+            "Resource": "arn:aws:ec2:*:*:instance/*",
+            "Condition": {
+                "ForAnyValue:StringNotLike": {
+                    "ec2:InstanceType": [
+                        "*.nano",
+                        "*.small",
+                        "*.micro",
+                        "*.medium"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "AllowSpecificRDSEnginesAndInstanceTypesOnly",
+            "Effect": "Deny",
+            "Action": [
+                "rds:CreateDBInstance"
+            ],
+            "Resource": "arn:aws:rds:*:*:db:*",
+            "Condition": {
+                "StringNotLikeIfExists": {
+                    "rds:DatabaseEngine": [
+                        "postgres",
+                        "mysql",
+                        "sqlserver-ex*",
+                        "sqlserver-se*"
+                    ]
+                },
+                "StringNotEquals": {
+                    "rds:DatabaseClass": [
+                        "db.*.micro",
+                        "db.*.small",
+                        "db.*.medium"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "DenyMultiAzRDS",
+            "Effect": "Deny",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:ModifyDBInstance"
+            ],
+            "Resource": "arn:aws:rds:*:*:db:*",
+            "Condition": {
+                "Bool": {
+                    "rds:MultiAz": "true"
+                }
+            }
+        },
+        {
+            "Sid": "DenyCreateUserAndAccesskey",
+            "Effect": "Deny",
+            "Action": [
+                "iam:CreateAccessKey",
+                "iam:CreateUser"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

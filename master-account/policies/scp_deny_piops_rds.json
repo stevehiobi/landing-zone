@@ -1,0 +1,11 @@
+{
+    "Sid": "DenyPIOPSRDS",
+    "Effect": "Deny",
+    "Action": "rds:CreateDBInstance",
+    "Resource": "arn:aws:rds:*:*:db:*",
+    "Condition": {
+        "NumericNotEquals": {
+            "rds:Piops": "0"
+        }
+    }
+}

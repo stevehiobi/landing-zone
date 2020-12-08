@@ -4,12 +4,12 @@
         {
             "Effect": "Deny",
             "Action": [
-                "ec2:RunInstances"
+                "ec2:CreateVolume"
             ],
-            "Resource": "*",
+            "Resource": "arn:aws:ec2:*:*:volume/*",
             "Condition": {
-                "StringNotEquals": {
-                    "ec2:InstanceType": "t3.micro"
+                "Bool": {
+                    "ec2:Encrypted": "false"
                 }
             }
         }
